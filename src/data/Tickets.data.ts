@@ -1,6 +1,6 @@
-import { Ticket } from '../models/Tickets.js';
+import { Ticket } from '../models/ticket.model.js';
 
-export const tickets: Ticket[] = [
+export const ticketsData: Ticket[] = [
     {
         id: 1,
         title: "Equipo no enciende",
