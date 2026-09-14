@@ -11,7 +11,7 @@ app.use(express.json());
 app.get('/api/health', (req: Request, res: Response) => {
   res.status(200).json({
     status: 'success',
-    message: 'Support Tickets API funcionando correctamente 🚀'
+    message: 'Support Tickets API funcionando correctamente'
   });
 });
 
