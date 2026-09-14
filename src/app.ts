@@ -14,17 +14,55 @@ app.use(express.json());
 app.get('/api/health', (req: Request, res: Response) => {
     res.status(200).json({
         status: 'success',
-        message: 'Support Tickets API funcionando correctamente 🚀'
+        message: 'Support Tickets API funcionando correctamente'
     });
 });
 
 // Obtener todos los tickets
-// http://localhost:3000/api/tickets
+// http://localhost:3000/api/health
+// http://localhost:3000/api/tickets?resolved=true
+// http://localhost:3000/api/tickets?resolved=false
 app.get('/api/tickets', (req: Request, res: Response) => {
+    let results = tickets;
+    const { resolved } = req.query;
+
+    if (resolved !== undefined) {
+        const isResolved = resolved === 'true';
+        results = tickets.filter(t => t.resolved === isResolved);
+    }
+
     res.status(200).json({
         success: true,
-        data: tickets,
-        total: tickets.length
+        data: results,
+        total: results.length
+    });
+});
+
+// Obtener ticket ID 
+// http://localhost:3000/api/tickets/:id  
+app.get('/api/tickets/:id', (req: Request, res: Response) => {
+    const idParam = req.params.id as string;
+
+    if (!/^\d+$/.test(idParam)) {
+        return res.status(400).json({
+            success: false,
+            message: 'El ID debe ser un entero positivo'
+        });
+    }
+
+    const ticketId = parseInt(idParam, 10);
+    const ticket = tickets.find(t => t.id === ticketId);
+
+    if (!ticket) {
+        return res.status(404).json({
+            success: false,
+            message: 'Ticket no encontrado'
+        });
+    }
+
+    return res.status(200).json({
+        success: true,
+        data: ticket
     });
 });
 
@@ -35,7 +73,7 @@ app.post('/api/tickets', (req: Request, res: Response) => {
 
     if (!body.title || !body.description || !body.priority) {
         return res.status(400).json({
-            status: 'error',
+            success: false,
             message: 'Faltan campos obligatorios (title, description, priority)'
         });
     }
@@ -53,24 +91,32 @@ app.post('/api/tickets', (req: Request, res: Response) => {
     tickets.push(newTicket);
 
     return res.status(201).json({
-        status: 'success',
+        success: true,
+        message: 'Ticket creado correctamente',
         data: newTicket
     });
 });
 
 // Actualizar Parcialmente un ticket 
 // http://localhost:3000/api/tickets/:id  
-// ejemplo: http://localhost:3000/api/tickets/1
 app.patch('/api/tickets/:id', (req: Request, res: Response) => {
-    const ticketId = parseInt(req.params.id as string);
+    const idParam = req.params.id as string;
+    if (!/^\d+$/.test(idParam)) {
+        return res.status(400).json({
+            success: false,
+            message: 'El ID debe ser un entero positivo'
+        });
+    }
+
+    const ticketId = parseInt(idParam, 10);
     const body: UpdateTicketDto = req.body;
 
     const ticketIndex = tickets.findIndex(t => t.id === ticketId);
 
     if (ticketIndex === -1) {
         return res.status(404).json({
-            status: 'error',
-            message: `Ticket con ID ${ticketId} no encontrado`
+            success: false,
+            message: 'Ticket no encontrado'
         });
     }
 
@@ -80,8 +126,39 @@ app.patch('/api/tickets/:id', (req: Request, res: Response) => {
     };
 
     return res.status(200).json({
-        status: 'success',
+        success: true,
+        message: 'Ticket actualizado correctamente',
         data: tickets[ticketIndex]
+    });
+});
+
+// Eliminar un ticket por ID 
+// http://localhost:3000/api/tickets/:id  
+app.delete('/api/tickets/:id', (req: Request, res: Response) => {
+    const idParam = req.params.id as string;
+    if (!/^\d+$/.test(idParam)) {
+        return res.status(400).json({
+            success: false,
+            message: 'El ID debe ser un entero positivo'
+        });
+    }
+
+    const ticketId = parseInt(idParam, 10);
+    const ticketIndex = tickets.findIndex(t => t.id === ticketId);
+
+    if (ticketIndex === -1) {
+        return res.status(404).json({
+            success: false,
+            message: 'Ticket no encontrado'
+        });
+    }
+
+    const deletedTicket = tickets.splice(ticketIndex, 1)[0];
+
+    return res.status(200).json({
+        success: true,
+        message: 'Ticket eliminado correctamente',
+        data: deletedTicket
     });
 });
 
